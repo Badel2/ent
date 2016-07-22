@@ -8,6 +8,7 @@ use std::env;
 
 fn calculate_entropy<P: AsRef<Path>>(path : P) -> Result<f64,std::io::Error> {
     let mut file = try!(File::open(&path));
+
     // This doesn't work for pipes
     //let filesize : u64 = try!(fs::metadata(&path)).len();
     let mut filesize : u64 = 0;
@@ -51,4 +52,23 @@ fn main() {
             Ok(ent) => println!("{:.5}\t{}", ent, f.to_string_lossy()),
         }
     }
+}
+
+#[test]
+fn it_works(){
+    assert_eq!(calculate_entropy("test0").unwrap(), 0.0);
+    assert_eq!(calculate_entropy("test1").unwrap(), 0.0);
+    assert_eq!(calculate_entropy("test2").unwrap(), 7.982743005032543);
+}
+
+#[test]
+#[should_panic]
+fn it_panics(){
+    let _ent = calculate_entropy("").unwrap();
+}
+
+#[test]
+#[should_panic]
+fn it_panics_also(){
+    let _ent = calculate_entropy("filethatdoenstexist").unwrap();
 }
