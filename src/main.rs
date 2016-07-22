@@ -8,10 +8,10 @@ use std::env;
 
 fn calculate_entropy<P: AsRef<Path>>(path : P) -> Result<f64,std::io::Error> {
     let mut file = try!(File::open(&path));
+    // This doesn't work for pipes
     //let filesize : u64 = try!(fs::metadata(&path)).len();
     let mut filesize : u64 = 0;
     let mut freq_table = [0u64; 256];
-    let mut entropy : f64 = 0.0;
     let mut buffer = [0; 1024];
 
     let mut x = try!(file.read(&mut buffer));
@@ -24,6 +24,8 @@ fn calculate_entropy<P: AsRef<Path>>(path : P) -> Result<f64,std::io::Error> {
         x = try!(file.read(&mut buffer));
     }
 
+    let mut entropy : f64 = 0.0;
+
     for &c in freq_table.iter(){
         if c != 0 {
             let temp : f64 = c as f64 / filesize as f64;
@@ -34,11 +36,10 @@ fn calculate_entropy<P: AsRef<Path>>(path : P) -> Result<f64,std::io::Error> {
 }
 
 fn main() { 
-
     let args: Vec<_> = env::args_os().skip(1).collect();
 
     if args.len() == 0 {
-        println!("Usage: ./shannon filenames");
+        println!("Usage: ./rust-shannon filenames");
         return;
     }
 
