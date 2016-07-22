@@ -7,22 +7,25 @@ use std::io::prelude::*;
 use std::env;
 
 fn calculate_entropy<P: AsRef<Path>>(path : P) -> Result<f64,std::io::Error> {
-    let mut file = try!(File::open(&path));
+    let mut file = try!(File::open(path));
 
     // This doesn't work for pipes
-    //let filesize : u64 = try!(fs::metadata(&path)).len();
+    //let filesize : u64 = try!(fs::metadata(path)).len();
     let mut filesize : u64 = 0;
     let mut freq_table = [0u64; 256];
     let mut buffer = [0; 1024];
 
-    let mut x = try!(file.read(&mut buffer));
-    while x > 0 {
+    // Read x bytes using a buffer. At EOF, x == 0
+    loop {
+        let x = try!(file.read(&mut buffer));
+        if x == 0 { break; }
+
         // Process x bytes:
         for &byte in buffer.iter().take(x){
             freq_table[byte as usize] += 1;
         }
+
         filesize += x as u64;
-        x = try!(file.read(&mut buffer));
     }
 
     let mut entropy : f64 = 0.0;
@@ -33,6 +36,7 @@ fn calculate_entropy<P: AsRef<Path>>(path : P) -> Result<f64,std::io::Error> {
             entropy += -temp * f64::log2(temp);
         }
     }
+
     Ok(entropy)
 }
 
