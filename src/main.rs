@@ -9,6 +9,7 @@ use std;
 use std::fs::File; 
 use std::ffi::OsString;
 use std::io::prelude::*;
+use std::path::Path;
 
 pub struct Shannon {
     filename: OsString,
@@ -18,9 +19,9 @@ pub struct Shannon {
 }
 
 impl Shannon {
-    pub fn open(path : &OsString) -> Result<Shannon,std::io::Error> {
+    pub fn open<P: AsRef<Path>>(path : P) -> Result<Shannon,std::io::Error> {
         //match shannon::Shannon::open(Path::new(&f),f.to_string_lossy().into_owned()){
-        let mut file = try!(File::open(path));
+        let mut file = try!(File::open(&path));
 
         // This doesn't work for pipes
         //let filesize : u64 = try!(fs::metadata(path)).len();
@@ -50,8 +51,7 @@ impl Shannon {
             }
         }
 
-        //let filename = String::from(path.to_string_lossy().into_owned());
-        let filename = path.clone();
+        let filename = OsString::from(path.as_ref().as_os_str());
         Ok( Shannon { 
             filename: filename,
             filesize: filesize,
