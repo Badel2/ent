@@ -91,6 +91,37 @@ fn pretty_size(s: u64) -> String {
     format!("{:>6.1} {} ", r, units[i])
 }
 
+fn pretty_ascii_table(t: &[u64; 256]) -> String {
+    // Assuming a 80 width terminal with unicode support
+    let freq_char = " ▁▂▃▄▅▆▇█";
+    let freq_char_len = freq_char.chars().count();
+    let total_freq = t.iter().fold(0, |a, &b| a + b);
+    let max_freq = *t.iter().enumerate().map(|(x, y)| (y, x)).max().unwrap_or((&0u64, 0)).0 as f64;
+    let mut s = String::with_capacity(4*80*3);
+    s.push_str("   00 ");
+    for (i, &x) in t.iter().enumerate() {
+        let n = x as f64 / max_freq * freq_char_len as f64;
+        let mut n = n as usize;
+        if n >= freq_char_len {
+            n = freq_char_len - 1;
+        }
+        let c = freq_char.chars().nth(n as usize).unwrap();
+        s.push(c);
+        match i { 
+            0x1F => s.push_str("   20 "),
+            0x3F => s.push_str("\n   40 "),
+            0x5F => s.push_str("   60 "),
+            0x7F => s.push_str("\n   80 "),
+            0x9F => s.push_str("   A0 "),
+            0xBF => s.push_str("\n   C0 "),
+            0xDF => s.push_str("   E0 "),
+            _ => {}
+        } 
+    }
+
+    s
+}
+
 fn main() { 
     let argv0 = env::args_os().next().unwrap();
     let args: Vec<_> = env::args_os().skip(1).collect();
@@ -127,7 +158,7 @@ fn main() {
                 Ok(s) => {
                     println!("{:.5}  [{}]  {}", s.entropy(), pretty_size(s.filesize()), s.filename());
                     if show_byte_frequency {
-                        //println!("{}",pretty_ascii_table(s.byte_frequency()));
+                        println!("{}",pretty_ascii_table(&s.freq_table()));
                     }
                 }
             }
