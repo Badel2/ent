@@ -21,7 +21,7 @@ pub struct Shannon {
 impl Shannon {
     pub fn open<P: AsRef<Path>>(path : P) -> Result<Shannon,std::io::Error> {
         //match shannon::Shannon::open(Path::new(&f),f.to_string_lossy().into_owned()){
-        let mut file = try!(File::open(&path));
+        let mut file = File::open(&path)?;
 
         // This doesn't work for pipes
         //let filesize : u64 = try!(fs::metadata(path)).len();
@@ -31,7 +31,7 @@ impl Shannon {
 
         // Read x bytes using a buffer. At EOF, x == 0
         loop {
-            let x = try!(file.read(&mut buffer));
+            let x = file.read(&mut buffer)?;
             if x == 0 { break; }
 
             // Process x bytes:
@@ -42,21 +42,21 @@ impl Shannon {
             filesize += x as u64;
         }
 
-        let mut entropy : f64 = 0.0;
+        let mut entropy: f64 = 0.0;
 
         for &c in freq_table.iter(){
             if c != 0 {
-                let temp : f64 = c as f64 / filesize as f64;
+                let temp: f64 = c as f64 / filesize as f64;
                 entropy += -temp * f64::log2(temp);
             }
         }
 
         let filename = OsString::from(path.as_ref().as_os_str());
         Ok( Shannon { 
-            filename: filename,
-            filesize: filesize,
-            freq_table: freq_table,
-            entropy: entropy,
+            filename,
+            filesize,
+            freq_table,
+            entropy,
         })
     }
     pub fn most_used_character(&self) -> u8 {
@@ -68,7 +68,7 @@ impl Shannon {
     pub fn filesize(&self) -> u64 {
         self.filesize
     }
-    pub fn freq_table(&self) -> [u64;256] {
+    pub fn freq_table(&self) -> [u64; 256] {
         self.freq_table
     }
     pub fn entropy(&self) -> f64 {
@@ -76,6 +76,19 @@ impl Shannon {
     }
 }
 
+}
+
+fn pretty_size(s: u64) -> String {
+    let units = ['B', 'K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y'];
+
+    let mut i = 0;
+    let mut r = s as f64;
+    while r >= 1000_f64 {
+        r /= 1000_f64;
+        i += 1;
+    }
+    
+    format!("{:>6.1} {} ", r, units[i])
 }
 
 fn main() { 
@@ -91,7 +104,7 @@ fn main() {
             Err(why) => writeln!(&mut std::io::stderr(), 
                     "couldn't open {}: {}", f.to_string_lossy(), why.description())
                     .expect("failed printing to stderr"),
-            Ok(s) => println!("{:.5}\t{}", s.entropy(), s.filename()),
+            Ok(s) => println!("{:.5}  [{}]  {}", s.entropy(), pretty_size(s.filesize()), s.filename()),
         }
     }
 }
