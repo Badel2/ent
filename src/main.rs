@@ -100,12 +100,37 @@ fn main() {
         return;
     }
 
+    let mut show_byte_frequency = false;
+    let mut parse_args = true;
     for f in args {
-        match shannon::Shannon::open(&f) {
-            Err(why) => writeln!(&mut std::io::stderr(), 
-                    "couldn't open {}: {}", f.to_string_lossy(), why.description())
-                    .expect("failed printing to stderr"),
-            Ok(s) => println!("{:.5}  [{}]  {}", s.entropy(), pretty_size(s.filesize()), s.filename()),
+        if Some('-') == f.to_string_lossy().chars().nth(0) {
+            // Arg is option
+            match f.to_string_lossy().chars().nth(1) {
+                // Help
+                Some('h') => {},
+                // print byte frequency
+                Some('b') => show_byte_frequency = true,
+                // no more args
+                Some('-') => parse_args = false,
+                // Unknown argument, retry as filename?
+                Some(x) => {},
+                // Get input from stdin
+                None => {}
+            }
+        } else {
+            // Arg is filename
+            parse_args = false;
+            match shannon::Shannon::open(&f) {
+                Err(why) => writeln!(&mut std::io::stderr(), 
+                        "couldn't open {}: {}", f.to_string_lossy(), why.description())
+                        .expect("failed printing to stderr"),
+                Ok(s) => {
+                    println!("{:.5}  [{}]  {}", s.entropy(), pretty_size(s.filesize()), s.filename());
+                    if show_byte_frequency {
+                        //println!("{}",pretty_ascii_table(s.byte_frequency()));
+                    }
+                }
+            }
         }
     }
 }
