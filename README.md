@@ -12,3 +12,12 @@ To use it system wide run `cargo install`. This will copy the ent executable to 
 ent filenames
 ```
 
+Example:
+
+```
+$ ent test*
+0.00000  [   0.0 B ]  test0
+0.00000  [   8.2 K ]  test1
+7.98274  [  10.2 K ]  test2
+
+```
