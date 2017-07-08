@@ -92,15 +92,16 @@ fn pretty_size(s: u64) -> String {
 }
 
 fn main() { 
+    let argv0 = env::args_os().next().unwrap();
     let args: Vec<_> = env::args_os().skip(1).collect();
 
     if args.len() == 0 {
-        println!("Usage: ./rust-shannon filenames");
+        println!("Usage: {} filenames", argv0.to_string_lossy());
         return;
     }
 
-    for f in args{
-        match shannon::Shannon::open(&f){
+    for f in args {
+        match shannon::Shannon::open(&f) {
             Err(why) => writeln!(&mut std::io::stderr(), 
                     "couldn't open {}: {}", f.to_string_lossy(), why.description())
                     .expect("failed printing to stderr"),
