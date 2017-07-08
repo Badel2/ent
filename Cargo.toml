@@ -1,5 +1,5 @@
 [package]
-name = "rust-shannon"
+name = "ent"
 version = "0.2.0"
 authors = ["root"]
 
