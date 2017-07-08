@@ -120,11 +120,13 @@ fn it_works(){
 #[test]
 #[should_panic]
 fn it_panics(){
+    use shannon::Shannon;
     let _ent = Shannon::open("").unwrap();
 }
 
 #[test]
 #[should_panic]
 fn it_panics_also(){
+    use shannon::Shannon;
     let _ent = Shannon::open("filethatdoenstexist").unwrap();
 }
