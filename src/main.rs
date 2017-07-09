@@ -5,6 +5,7 @@ use std::io::prelude::*;
 use std::env;
 
 mod shannon;
+use shannon::Shannon;
 
 fn pretty_size(s: u64) -> String {
     let units = ['B', 'K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y'];
@@ -79,7 +80,7 @@ fn main() {
         } else {
             // Arg is filename
             parse_args = false;
-            match shannon::Shannon::open(&f) {
+            match Shannon::open(&f) {
                 Err(why) => writeln!(&mut std::io::stderr(), 
                         "couldn't open {}: {}", f.to_string_lossy(), why.description())
                         .expect("failed printing to stderr"),
@@ -117,3 +118,4 @@ fn it_panics_also(){
     use shannon::Shannon;
     let _ent = Shannon::open("filethatdoenstexist").unwrap();
 }
+
