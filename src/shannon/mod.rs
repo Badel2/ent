@@ -2,6 +2,7 @@ use std;
 use std::fs::File; 
 use std::ffi::OsString;
 use std::io::prelude::*;
+use std::io::{BufRead, BufReader};
 use std::path::Path;
 
 pub struct Shannon {
@@ -12,19 +13,14 @@ pub struct Shannon {
 }
 
 impl Shannon {
-    pub fn open<P: AsRef<Path>>(path : P) -> Result<Shannon,std::io::Error> {
-        //match shannon::Shannon::open(Path::new(&f),f.to_string_lossy().into_owned()){
-        let mut file = File::open(&path)?;
-
-        // This doesn't work for pipes
-        //let filesize : u64 = try!(fs::metadata(path)).len();
+    pub fn read<R: BufRead>(r: &mut R, filename: OsString) -> Result<Shannon, std::io::Error> {
         let mut filesize : u64 = 0;
         let mut freq_table = [0u64; 256];
         let mut buffer = [0; 1024];
 
         // Read x bytes using a buffer. At EOF, x == 0
         loop {
-            let x = file.read(&mut buffer)?;
+            let x = r.read(&mut buffer)?;
             if x == 0 { break; }
 
             // Process x bytes:
@@ -44,13 +40,19 @@ impl Shannon {
             }
         }
 
-        let filename = OsString::from(path.as_ref().as_os_str());
         Ok( Shannon { 
             filename,
             filesize,
             freq_table,
             entropy,
         })
+    }
+    pub fn open<P: AsRef<Path>>(path : P) -> Result<Shannon,std::io::Error> {
+        //match shannon::Shannon::open(Path::new(&f),f.to_string_lossy().into_owned()){
+        let mut file = File::open(&path)?;
+        let mut reader = BufReader::new(file);
+        
+        Self::read(&mut reader, OsString::from(path.as_ref().as_os_str()))
     }
     pub fn filename(&self) -> String {
         self.filename.to_string_lossy().into_owned()
