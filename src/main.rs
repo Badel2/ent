@@ -107,7 +107,7 @@ fn main() {
     let argv0 = env::args_os().next().unwrap();
     let args: Vec<_> = env::args_os().skip(1).collect();
 
-    if args.len() == 0 {
+    if args.is_empty() {
         println!("Usage: {} filenames", argv0.to_string_lossy());
         return;
     }

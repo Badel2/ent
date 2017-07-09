@@ -79,7 +79,7 @@ impl Shannon {
         let mut v: f64 = 0.0;
         for s in self.freq_table.iter() {
             let x = *s as f64 - mean;
-            v = v + x*x;
+            v += x*x;
         }
         let denom = (256 - 1) as f64;
         (v/denom).sqrt()
