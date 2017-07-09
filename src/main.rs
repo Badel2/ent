@@ -1,6 +1,7 @@
 // file open 
 use std::error::Error; 
 use std::io::prelude::*; 
+use std::ffi::OsString;
 // args
 use std::env;
 
@@ -54,6 +55,36 @@ fn pretty_ascii_table(t: &[u64; 256]) -> String {
     s
 }
 
+struct Options {
+    show_byte_frequency: bool,
+}
+
+impl Default for Options {
+    fn default() -> Options {
+        Options {
+            show_byte_frequency: false,
+        }
+    }
+}
+
+impl Options {
+    fn process_file(&self, f: OsString) {
+        match Shannon::open(&f) {
+            Err(why) => writeln!(&mut std::io::stderr(), 
+                    "couldn't open {}: {}", f.to_string_lossy(), why.description())
+                    .expect("failed printing to stderr"),
+            Ok(s) => {
+                println!("{:.5}  [{}]  {}", s.entropy(), pretty_size(s.filesize()), s.filename());
+                if self.show_byte_frequency {
+                    println!("  mean: {}, std: {:.5}, min: {} (0x{:0X}), max: {} (0x{:0X})", s.mean(), s.std_dev(), s.byte_min().1, s.byte_min().0, s.byte_max().1, s.byte_max().0);
+                    println!("{}",pretty_ascii_table(s.freq_table()));
+                }
+            }
+        }
+
+    }
+}
+
 fn main() { 
     let argv0 = env::args_os().next().unwrap();
     let args: Vec<_> = env::args_os().skip(1).collect();
@@ -63,7 +94,7 @@ fn main() {
         return;
     }
 
-    let mut show_byte_frequency = false;
+    let mut o: Options = Default::default();
     let mut parse_args = true;
     for f in args {
         if parse_args && f.to_string_lossy().chars().nth(0) == Some('-') {
@@ -72,7 +103,7 @@ fn main() {
                 // Help
                 Some('h') => {},
                 // print byte frequency
-                Some('b') => show_byte_frequency = true,
+                Some('b') => o.show_byte_frequency = true,
                 // no more args
                 Some('-') => parse_args = false,
                 // Unknown argument, retry as filename?
@@ -83,18 +114,7 @@ fn main() {
         } else {
             // Arg is filename
             parse_args = false;
-            match Shannon::open(&f) {
-                Err(why) => writeln!(&mut std::io::stderr(), 
-                        "couldn't open {}: {}", f.to_string_lossy(), why.description())
-                        .expect("failed printing to stderr"),
-                Ok(s) => {
-                    println!("{:.5}  [{}]  {}", s.entropy(), pretty_size(s.filesize()), s.filename());
-                    if show_byte_frequency {
-                        println!("  mean: {}, std: {:.5}, min: {} (0x{:0X}), max: {} (0x{:0X})", s.mean(), s.std_dev(), s.byte_min().1, s.byte_min().0, s.byte_max().1, s.byte_max().0);
-                        println!("{}",pretty_ascii_table(s.freq_table()));
-                    }
-                }
-            }
+            o.process_file(f);
         }
     }
 }
