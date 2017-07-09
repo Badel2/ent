@@ -25,7 +25,7 @@ fn pretty_ascii_table(t: &[u64; 256]) -> String {
     // Assuming a 80 width terminal with unicode support
     let freq_char = " ▁▂▃▄▅▆▇█";
     let freq_char_len = freq_char.chars().count();
-    let total_freq = t.iter().fold(0, |a, &b| a + b);
+    //let total_freq = t.iter().fold(0, |a, &b| a + b);
     let max_freq = *t.iter().enumerate().map(|(x, y)| (y, x)).max().unwrap_or((&0u64, 0)).0 as f64;
     let mut s = String::with_capacity(4*80*3);
     s.push_str("   00 ");
@@ -125,7 +125,7 @@ fn main() {
                 // no more args
                 Some('-') => parse_args = false,
                 // Unknown argument, retry as filename?
-                Some(x) => o.process_file(f),
+                Some(_) => o.process_file(f),
                 // Get input from stdin
                 None => o.process_stdin(),
             }
