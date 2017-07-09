@@ -134,7 +134,7 @@ fn main() {
     let mut show_byte_frequency = false;
     let mut parse_args = true;
     for f in args {
-        if Some('-') == f.to_string_lossy().chars().nth(0) {
+        if parse_args && f.to_string_lossy().chars().nth(0) == Some('-') {
             // Arg is option
             match f.to_string_lossy().chars().nth(1) {
                 // Help
