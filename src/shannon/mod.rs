@@ -13,21 +13,24 @@ pub struct Shannon {
 
 impl Shannon {
     pub fn read<R: BufRead>(r: &mut R, filename: OsString) -> Result<Shannon, std::io::Error> {
-        let mut filesize : u64 = 0;
+        let mut filesize: u64 = 0;
         let mut freq_table = [0u64; 256];
-        let mut buffer = [0; 1024];
 
-        // Read x bytes using a buffer. At EOF, x == 0
+        // Read x bytes using BufRead. At EOF, x == 0
         loop {
-            let x = r.read(&mut buffer)?;
+            let x = {
+                let buffer = r.fill_buf()?;
+
+                for &byte in buffer.iter() {
+                    freq_table[byte as usize] += 1;
+                }
+
+                buffer.len()
+            };
+
             if x == 0 { break; }
-
-            // Process x bytes:
-            for &byte in buffer.iter().take(x){
-                freq_table[byte as usize] += 1;
-            }
-
             filesize += x as u64;
+            r.consume(x);
         }
 
         let mut entropy: f64 = 0.0;
