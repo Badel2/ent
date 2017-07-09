@@ -47,12 +47,17 @@ impl Shannon {
             entropy,
         })
     }
-    pub fn open<P: AsRef<Path>>(path : P) -> Result<Shannon,std::io::Error> {
-        //match shannon::Shannon::open(Path::new(&f),f.to_string_lossy().into_owned()){
+    pub fn open<P: AsRef<Path>>(path: P) -> Result<Shannon, std::io::Error> {
         let mut file = File::open(&path)?;
         let mut reader = BufReader::new(file);
         
         Self::read(&mut reader, OsString::from(path.as_ref().as_os_str()))
+    }
+    pub fn from_stdin() -> Result<Shannon, std::io::Error> {
+        let stdin = std::io::stdin();
+        let mut file = &mut stdin.lock() as &mut BufRead;
+        let mut reader = BufReader::new(file);
+        Self::read(&mut reader, OsString::from("-"))
     }
     pub fn filename(&self) -> String {
         self.filename.to_string_lossy().into_owned()
