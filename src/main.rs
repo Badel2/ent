@@ -137,27 +137,3 @@ fn main() {
     }
 }
 
-#[test]
-fn it_works(){
-    use shannon::Shannon;
-    assert_eq!(Shannon::open("test0").unwrap().entropy(), 0.0);
-    assert_eq!(Shannon::open("test1").unwrap().entropy(), 0.0);
-    let t2 = Shannon::open("test2").unwrap();
-    assert_eq!(t2.entropy(), 7.982743005032543);
-    assert_eq!(t2.filesize(), 10240);
-}
-
-#[test]
-#[should_panic]
-fn it_panics(){
-    use shannon::Shannon;
-    let _ent = Shannon::open("").unwrap();
-}
-
-#[test]
-#[should_panic]
-fn it_panics_also(){
-    use shannon::Shannon;
-    let _ent = Shannon::open("filethatdoenstexist").unwrap();
-}
-
