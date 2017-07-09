@@ -90,6 +90,7 @@ fn main() {
                 Ok(s) => {
                     println!("{:.5}  [{}]  {}", s.entropy(), pretty_size(s.filesize()), s.filename());
                     if show_byte_frequency {
+                        println!("  mean: {}, std: {:.5}, min: {} (0x{:0X}), max: {} (0x{:0X})", s.mean(), s.std_dev(), s.byte_min().1, s.byte_min().0, s.byte_max().1, s.byte_max().0);
                         println!("{}",pretty_ascii_table(s.freq_table()));
                     }
                 }
