@@ -29,11 +29,14 @@ fn pretty_ascii_table(t: &[u64; 256]) -> String {
     let mut s = String::with_capacity(4*80*3);
     s.push_str("   00 ");
     for (i, &x) in t.iter().enumerate() {
-        let n = x as f64 / max_freq * freq_char_len as f64;
-        let mut n = n as usize;
-        if n >= freq_char_len {
-            n = freq_char_len - 1;
-        }
+        let n = if x == 0 { 0 } else {
+            let n = x as f64 / max_freq * (freq_char_len - 1) as f64;
+            let mut n = n as usize;
+            if n >= freq_char_len - 1 {
+                n = freq_char_len - 2;
+            }
+            n+1
+        };
         let c = freq_char.chars().nth(n as usize).unwrap();
         s.push(c);
         match i { 
