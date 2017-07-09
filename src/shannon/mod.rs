@@ -61,8 +61,8 @@ impl Shannon {
     pub fn filesize(&self) -> u64 {
         self.filesize
     }
-    pub fn freq_table(&self) -> [u64; 256] {
-        self.freq_table
+    pub fn freq_table(&self) -> &[u64; 256] {
+        &self.freq_table
     }
     pub fn entropy(&self) -> f64 {
         self.entropy

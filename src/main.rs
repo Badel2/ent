@@ -86,7 +86,7 @@ fn main() {
                 Ok(s) => {
                     println!("{:.5}  [{}]  {}", s.entropy(), pretty_size(s.filesize()), s.filename());
                     if show_byte_frequency {
-                        println!("{}",pretty_ascii_table(&s.freq_table()));
+                        println!("{}",pretty_ascii_table(s.freq_table()));
                     }
                 }
             }
