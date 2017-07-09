@@ -74,14 +74,28 @@ impl Options {
                     "couldn't open {}: {}", f.to_string_lossy(), why.description())
                     .expect("failed printing to stderr"),
             Ok(s) => {
-                println!("{:.5}  [{}]  {}", s.entropy(), pretty_size(s.filesize()), s.filename());
-                if self.show_byte_frequency {
-                    println!("  mean: {}, std: {:.5}, min: {} (0x{:0X}), max: {} (0x{:0X})", s.mean(), s.std_dev(), s.byte_min().1, s.byte_min().0, s.byte_max().1, s.byte_max().0);
-                    println!("{}",pretty_ascii_table(s.freq_table()));
-                }
+                self.print_info(&s);
             }
         }
+    }
 
+    fn process_stdin(&self) {
+        match Shannon::from_stdin() {
+            Err(why) => writeln!(&mut std::io::stderr(), 
+                    "couldn't open stdin: {}", why.description())
+                    .expect("failed printing to stderr"),
+            Ok(s) => {
+                self.print_info(&s);
+            }
+        }
+    }
+
+    fn print_info(&self, s: &Shannon) {
+        println!("{:.5}  [{}]  {}", s.entropy(), pretty_size(s.filesize()), s.filename());
+        if self.show_byte_frequency {
+            println!("  mean: {}, std: {:.5}, min: {} (0x{:0X}), max: {} (0x{:0X})", s.mean(), s.std_dev(), s.byte_min().1, s.byte_min().0, s.byte_max().1, s.byte_max().0);
+            println!("{}",pretty_ascii_table(s.freq_table()));
+        }
     }
 }
 
@@ -107,9 +121,9 @@ fn main() {
                 // no more args
                 Some('-') => parse_args = false,
                 // Unknown argument, retry as filename?
-                Some(x) => {},
+                Some(x) => o.process_file(f),
                 // Get input from stdin
-                None => {}
+                None => o.process_stdin(),
             }
         } else {
             // Arg is filename
