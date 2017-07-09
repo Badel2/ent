@@ -65,25 +65,25 @@ impl Shannon {
         self.entropy
     }
     pub fn mean(&self) -> f64 {
-		self.filesize as f64 / 256_f64
+        self.filesize as f64 / 256_f64
     }
-	// https://doc.rust-lang.org/1.1.0/src/test/stats.rs.html
+    // https://doc.rust-lang.org/1.1.0/src/test/stats.rs.html
     pub fn std_dev(&self) -> f64 {
-		let mean = self.mean();
-		let mut v: f64 = 0.0;
-		for s in self.freq_table.iter() {
-			let x = *s as f64 - mean;
-			v = v + x*x;
-		}
-		let denom = (256 - 1) as f64;
-		(v/denom).sqrt()
+        let mean = self.mean();
+        let mut v: f64 = 0.0;
+        for s in self.freq_table.iter() {
+            let x = *s as f64 - mean;
+            v = v + x*x;
+        }
+        let denom = (256 - 1) as f64;
+        (v/denom).sqrt()
     }
-	pub fn byte_min(&self) -> (u8, u64) {
-		let (a, b) = self.freq_table.iter().enumerate().map(|(x, y)| (y, x)).min().unwrap();
-		(b as u8, *a)
-	}
-	pub fn byte_max(&self) -> (u8, u64) {
-		let (a, b) = self.freq_table.iter().enumerate().map(|(x, y)| (y, x)).max().unwrap();
-		(b as u8, *a)
-	}
+    pub fn byte_min(&self) -> (u8, u64) {
+        let (a, b) = self.freq_table.iter().enumerate().map(|(x, y)| (y, x)).min().unwrap();
+        (b as u8, *a)
+    }
+    pub fn byte_max(&self) -> (u8, u64) {
+        let (a, b) = self.freq_table.iter().enumerate().map(|(x, y)| (y, x)).max().unwrap();
+        (b as u8, *a)
+    }
 }
