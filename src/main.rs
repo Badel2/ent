@@ -55,6 +55,10 @@ fn pretty_ascii_table(t: &[u64; 256]) -> String {
     s
 }
 
+fn print_help() {
+    println!("Currently supported flags: [bh]");
+}
+
 struct Options {
     show_byte_frequency: bool,
 }
@@ -115,7 +119,7 @@ fn main() {
             // Arg is option
             match f.to_string_lossy().chars().nth(1) {
                 // Help
-                Some('h') => {},
+                Some('h') => { print_help(); return; },
                 // print byte frequency
                 Some('b') => o.show_byte_frequency = true,
                 // no more args
