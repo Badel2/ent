@@ -1,9 +1,9 @@
+extern crate clap;
+use clap::{App, Arg};
 // file open 
 use std::error::Error; 
 use std::io::prelude::*; 
 use std::ffi::OsString;
-// args
-use std::env;
 
 mod shannon;
 use shannon::Shannon;
@@ -55,10 +55,6 @@ fn pretty_ascii_table(t: &[u64; 256]) -> String {
     s
 }
 
-fn print_help() {
-    println!("Currently supported flags: [bh]");
-}
-
 struct Options {
     show_byte_frequency: bool,
 }
@@ -104,35 +100,31 @@ impl Options {
 }
 
 fn main() { 
-    let argv0 = env::args_os().next().unwrap();
-    let args: Vec<_> = env::args_os().skip(1).collect();
-
-    if args.is_empty() {
-        println!("Usage: {} filenames", argv0.to_string_lossy());
-        return;
-    }
+    let matches = App::new("ent")
+        .arg(Arg::with_name("filenames")
+            .help("Input files")
+            .index(1)
+            .multiple(true)
+            .required(true))
+        .arg(Arg::with_name("table")
+            .help("Print ascii table")
+            .short("b")
+            .long("table"))
+        .get_matches();
 
     let mut o: Options = Default::default();
-    let mut parse_args = true;
-    for f in args {
-        if parse_args && f.to_string_lossy().chars().nth(0) == Some('-') {
-            // Arg is option
-            match f.to_string_lossy().chars().nth(1) {
-                // Help
-                Some('h') => { print_help(); return; },
-                // print byte frequency
-                Some('b') => o.show_byte_frequency = true,
-                // no more args
-                Some('-') => parse_args = false,
-                // Unknown argument, retry as filename?
-                Some(_) => o.process_file(f),
-                // Get input from stdin
-                None => o.process_stdin(),
+
+    if matches.is_present("table") {
+        o.show_byte_frequency = true;
+    }
+
+    if let Some(in_v) = matches.values_of("filenames") {
+        for f in in_v {
+            if f.len() == 1 && f.chars().nth(0).unwrap() == '-' {
+                o.process_stdin()
+            } else {
+                o.process_file(OsString::from(f));
             }
-        } else {
-            // Arg is filename
-            parse_args = false;
-            o.process_file(f);
         }
     }
 }
