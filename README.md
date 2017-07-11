@@ -26,10 +26,10 @@ Useful examples:
 
 Find if the big files in your home folder can be easyly compressed to save disk space:
 ```
-$ find ~ -size +100M | xargs ent
+$ find ~ -size +100M -print0 | xargs -0 ent
 ```
 
 Check if your /dev/urandom is random enough:
 ```
-$ ent <(dd if=/dev/urandom bs=1M count=1)
+$ head -c 1M /dev/urandom | ent -
 ```
