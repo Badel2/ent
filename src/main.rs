@@ -57,12 +57,14 @@ fn pretty_ascii_table(t: &[u64; 256]) -> String {
 
 struct Options {
     show_byte_frequency: bool,
+    show_free_space: bool,
 }
 
 impl Default for Options {
     fn default() -> Options {
         Options {
             show_byte_frequency: false,
+            show_free_space: false,
         }
     }
 }
@@ -91,7 +93,12 @@ impl Options {
     }
 
     fn print_info(&self, s: &Shannon) {
-        println!("{:.5}  [{}]  {}", s.entropy(), pretty_size(s.filesize()), s.filename());
+        let filesize = if self.show_free_space {
+            (s.filesize() as f64 * (1_f64 - s.entropy()/8_f64)) as u64
+        } else {
+            s.filesize()
+        };
+        println!("{:.5}  [{}]  {}", s.entropy(), pretty_size(filesize), s.filename());
         if self.show_byte_frequency {
             println!("  mean: {}, std: {:.5}, min: {} (0x{:0X}), max: {} (0x{:0X})", s.mean(), s.std_dev(), s.byte_min().1, s.byte_min().0, s.byte_max().1, s.byte_max().0);
             println!("{}",pretty_ascii_table(s.freq_table()));
@@ -110,12 +117,19 @@ fn main() {
             .help("Print ascii table")
             .short("b")
             .long("table"))
+        .arg(Arg::with_name("free")
+            .help("Show how many bytes could be freed if the files were compressed")
+            .short("f")
+            .long("free"))
         .get_matches();
 
     let mut o: Options = Default::default();
 
     if matches.is_present("table") {
         o.show_byte_frequency = true;
+    }
+    if matches.is_present("free") {
+        o.show_free_space = true;
     }
 
     if let Some(in_v) = matches.values_of("filenames") {
