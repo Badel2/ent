@@ -95,6 +95,21 @@ impl Shannon {
         let (a, b) = self.freq_table.iter().enumerate().map(|(x, y)| (y, x)).max().unwrap();
         (b as u8, *a)
     }
+    pub fn random_walk(&self) -> f64 {
+        // Start at 0. For every bit, go left if 0 and go right if 1
+        // In the end, normalize the scale so it's between -1 and +1
+
+        // This array stores the number of ones in a nibble 
+        let one_count = [ 0u8, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4 ];
+        let mut start = 0;
+        for (i, &x) in self.freq_table.iter().enumerate() {
+            // A byte is two nibbles:
+            let ones = one_count[i&0xf] + one_count[i>>4];
+            start += (ones as i64 - 4) * 2 * x as i64;
+        }
+
+        start as f64 / self.filesize() as f64 / 8_f64
+    }
 }
 
 #[test]
