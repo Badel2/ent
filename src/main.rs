@@ -133,7 +133,7 @@ fn main() {
 
     if let Some(in_v) = matches.values_of("filenames") {
         for f in in_v {
-            if f.len() == 1 && f.chars().nth(0).unwrap() == '-' {
+            if f == "-" {
                 o.process_stdin()
             } else {
                 o.process_file(OsString::from(f));
