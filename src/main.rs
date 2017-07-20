@@ -72,9 +72,8 @@ impl Default for Options {
 impl Options {
     fn process_file(&self, f: OsString) {
         match Shannon::open(&f) {
-            Err(why) => writeln!(&mut std::io::stderr(), 
-                    "couldn't open {}: {}", f.to_string_lossy(), why.description())
-                    .expect("failed printing to stderr"),
+            Err(why) => eprintln!(
+                    "couldn't open {}: {}", f.to_string_lossy(), why.description()),
             Ok(s) => {
                 self.print_info(&s);
             }
@@ -83,9 +82,8 @@ impl Options {
 
     fn process_stdin(&self) {
         match Shannon::from_stdin() {
-            Err(why) => writeln!(&mut std::io::stderr(), 
-                    "couldn't open stdin: {}", why.description())
-                    .expect("failed printing to stderr"),
+            Err(why) => eprintln!(
+                    "couldn't open stdin: {}", why.description()),
             Ok(s) => {
                 self.print_info(&s);
             }
