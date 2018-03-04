@@ -1,8 +1,6 @@
 extern crate clap;
 use clap::{App, Arg};
-// file open 
 use std::error::Error; 
-use std::io::prelude::*; 
 use std::ffi::OsString;
 
 mod shannon;
@@ -21,24 +19,26 @@ fn pretty_size(s: u64) -> String {
     format!("{:>6.1} {} ", r, units[i])
 }
 
+const FREQ_CHAR: [char; 9] = [
+    ' ', '▁', '▂', '▃', '▄', '▅', '▆', '▇', '█',
+];
+
 fn pretty_ascii_table(t: &[u64; 256]) -> String {
     // Assuming a 80 width terminal with unicode support
-    let freq_char = " ▁▂▃▄▅▆▇█";
-    let freq_char_len = freq_char.chars().count();
     //let total_freq = t.iter().fold(0, |a, &b| a + b);
     let max_freq = *t.iter().enumerate().map(|(x, y)| (y, x)).max().unwrap_or((&0u64, 0)).0 as f64;
     let mut s = String::with_capacity(4*80*3);
     s.push_str("   00 ");
     for (i, &x) in t.iter().enumerate() {
         let n = if x == 0 { 0 } else {
-            let n = x as f64 / max_freq * (freq_char_len - 1) as f64;
+            let n = x as f64 / max_freq * (FREQ_CHAR.len() - 1) as f64;
             let mut n = n as usize;
-            if n >= freq_char_len - 1 {
-                n = freq_char_len - 2;
+            if n >= FREQ_CHAR.len() - 1 {
+                n = FREQ_CHAR.len() - 2;
             }
             n+1
         };
-        let c = freq_char.chars().nth(n as usize).unwrap();
+        let c = FREQ_CHAR[n as usize];
         s.push(c);
         match i { 
             0x1F => s.push_str("   20 "),
@@ -56,21 +56,20 @@ fn pretty_ascii_table(t: &[u64; 256]) -> String {
 }
 
 fn pretty_chunk_bar(ce: &[f64]) -> String {
-    let num_chunks = ce.len();
+    // TODO: make this configurable
     let chunk_size = "16KiB";
     let line_size = "16KiB * 64 = 1MiB";
-    let freq_char = " ▁▂▃▄▅▆▇█";
-    let freq_char_len = freq_char.chars().count();
     
     let mut s = String::with_capacity(4*80*3);
     s.push_str(&format!(
         "  Chunk size: {}    Line size: {}\n   {:04} ", chunk_size, line_size, 0));
     for (i, &x) in ce.iter().enumerate() {
-        let mut n = x as usize;
-        if n >= 8 {
-            n = 7;
+        // Map entropy from [0.0, 8.0] to [1, 8]
+        let mut n = (x + 0.5) as usize + 1;
+        if n >= 9 {
+            n = 8;
         }
-        let c = freq_char.chars().nth(n as usize).unwrap();
+        let c = FREQ_CHAR[n as usize];
         s.push(c);
         match i % 64 { 
             63 => s.push_str(&format!("\n   {:04} ", 1 + i / 64)),
@@ -181,3 +180,10 @@ fn main() {
     }
 }
 
+
+pub mod tests {
+    #[test]
+    fn constant_len_9() {
+        assert!(FREQ_CHAR.len() == 9);
+    }
+}

@@ -4,6 +4,11 @@ use std::ffi::OsString;
 use std::io::{BufRead, BufReader};
 use std::path::Path;
 
+// Idea: create a worker thread whose job is to calculate entropy given a
+// chunk, this way the main thread only needs to count freq and send complete
+// chunks for computation. After reading the filename, wait for the worker
+// thread to finish and return Vec<Chunk> with calculated entropy.
+
 pub struct Shannon {
     filename: OsString,
     filesize: u64,
