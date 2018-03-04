@@ -182,6 +182,8 @@ fn main() {
 
 
 pub mod tests {
+    use super::*;
+
     #[test]
     fn constant_len_9() {
         assert!(FREQ_CHAR.len() == 9);

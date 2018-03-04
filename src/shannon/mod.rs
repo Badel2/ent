@@ -8,6 +8,9 @@ use std::path::Path;
 // chunk, this way the main thread only needs to count freq and send complete
 // chunks for computation. After reading the filename, wait for the worker
 // thread to finish and return Vec<Chunk> with calculated entropy.
+// The worker thread could also do the increment, this way the main thread
+// can spend more time waiting for I/O. Is it expensive to send an array to
+// a new thread?
 
 pub struct Shannon {
     filename: OsString,
