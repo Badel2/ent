@@ -55,9 +55,36 @@ fn pretty_ascii_table(t: &[u64; 256]) -> String {
     s
 }
 
+fn pretty_chunk_bar(ce: &[f64]) -> String {
+    let num_chunks = ce.len();
+    let chunk_size = "16KiB";
+    let line_size = "16KiB * 64 = 1MiB";
+    let freq_char = " ▁▂▃▄▅▆▇█";
+    let freq_char_len = freq_char.chars().count();
+    
+    let mut s = String::with_capacity(4*80*3);
+    s.push_str(&format!(
+        "  Chunk size: {}    Line size: {}\n   {:04} ", chunk_size, line_size, 0));
+    for (i, &x) in ce.iter().enumerate() {
+        let mut n = x as usize;
+        if n >= 8 {
+            n = 7;
+        }
+        let c = freq_char.chars().nth(n as usize).unwrap();
+        s.push(c);
+        match i % 64 { 
+            63 => s.push_str(&format!("\n   {:04} ", 1 + i / 64)),
+            _ => {}
+        }
+    }
+
+    s
+}
+
 struct Options {
     show_byte_frequency: bool,
     show_free_space: bool,
+    show_chunks: bool,
 }
 
 impl Default for Options {
@@ -65,6 +92,7 @@ impl Default for Options {
         Options {
             show_byte_frequency: false,
             show_free_space: false,
+            show_chunks: false,
         }
     }
 }
@@ -102,6 +130,10 @@ impl Options {
             println!("  Random walk ends at: {:+.5}", s.random_walk());
             println!("{}",pretty_ascii_table(s.freq_table()));
         }
+        if self.show_chunks {
+            //println!("{:#?}", s.chunk_entropy());
+            println!("{}", pretty_chunk_bar(&s.chunk_entropy()));
+        }
     }
 }
 
@@ -120,6 +152,10 @@ fn main() {
             .help("Show how many bytes could be freed if the files were compressed")
             .short("f")
             .long("free"))
+        .arg(Arg::with_name("chunks")
+            .help("Show details for each chunk")
+            .short("c")
+            .long("chunks"))
         .get_matches();
 
     let mut o: Options = Default::default();
@@ -129,6 +165,9 @@ fn main() {
     }
     if matches.is_present("free") {
         o.show_free_space = true;
+    }
+    if matches.is_present("chunks") {
+        o.show_chunks = true;
     }
 
     if let Some(in_v) = matches.values_of("filenames") {

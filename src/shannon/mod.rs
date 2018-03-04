@@ -9,28 +9,51 @@ pub struct Shannon {
     filesize: u64,
     freq_table: [u64; 256],
     entropy: f64,
+    chunks: Vec<Chunk>,
+    chunk_size: u32,
 }
 
 impl Shannon {
     pub fn read<R: BufRead>(r: &mut R, filename: OsString) -> Result<Shannon, std::io::Error> {
         let mut filesize: u64 = 0;
         let mut freq_table = [0u64; 256];
+        let mut chunks = vec![];
+        let chunk_size = 16 * 1024;
+        let mut buffer = [0u8; 16 * 1024];
+
+        let mut new_chunk = Chunk::new();
+        let mut new_chunk_size = 0;
 
         // Read x bytes using BufRead. At EOF, x == 0
         loop {
-            let x = {
-                let buffer = r.fill_buf()?;
-
-                for &byte in buffer.iter() {
-                    freq_table[byte as usize] += 1;
-                }
-
-                buffer.len()
-            };
+            let x = r.read(&mut buffer)?;
 
             if x == 0 { break; }
+            for &byte in buffer.iter().take(x) {
+                freq_table[byte as usize] += 1;
+                new_chunk.count(byte);
+            }
+
+            new_chunk_size += x;
+            if new_chunk_size > chunk_size {
+                panic!("Noooo!");
+            }
+            if new_chunk_size == chunk_size {
+                // Chunk completed, save!
+                new_chunk.calc_entropy();
+                chunks.push(new_chunk);
+                new_chunk = Chunk::new();
+                new_chunk_size = 0;
+            }
+
             filesize += x as u64;
-            r.consume(x);
+        }
+
+        // Push last (incomplete) chunk, its size can be calculated as
+        // self.filesize - (self.chunks.len() - 1) * self.chunk_size
+        if new_chunk_size != 0 {
+            new_chunk.calc_entropy();
+            chunks.push(new_chunk);
         }
 
         let mut entropy: f64 = 0.0;
@@ -42,11 +65,15 @@ impl Shannon {
             }
         }
 
+        let chunk_size = chunk_size as u32;
+
         Ok( Shannon { 
             filename,
             filesize,
             freq_table,
             entropy,
+            chunks,
+            chunk_size,
         })
     }
     pub fn open<P: AsRef<Path>>(path: P) -> Result<Shannon, std::io::Error> {
@@ -109,6 +136,40 @@ impl Shannon {
         }
 
         start as f64 / self.filesize() as f64 / 8_f64
+    }
+    pub fn chunk_entropy(&self) -> Vec<f64> {
+        self.chunks.iter().map(|c| c.entropy()).collect()
+    }
+}
+
+pub struct Chunk {
+    // max chunk size of 2^32 - 1 bytes
+    freq_table: [u32; 256],
+    entropy: f64,
+}
+
+impl Chunk {
+    fn new() -> Self {
+        Self { freq_table: [0; 256], entropy: 0.0 }
+    }
+    fn count(&mut self, byte: u8) {
+        self.freq_table[byte as usize] += 1;
+    }
+    fn calc_entropy(&mut self) {
+        let mut entropy: f64 = 0.0;
+        let filesize: u32 = self.freq_table.iter().sum();
+
+        for &c in self.freq_table.iter(){
+            if c != 0 {
+                let temp: f64 = c as f64 / filesize as f64;
+                entropy += -temp * f64::log2(temp);
+            }
+        }
+
+        self.entropy = entropy;
+    }
+    fn entropy(&self) -> f64 {
+        self.entropy
     }
 }
 
