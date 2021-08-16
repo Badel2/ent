@@ -33,7 +33,8 @@ impl Shannon {
 
         // Read x bytes using BufRead. At EOF, x == 0
         loop {
-            let x = r.read(&mut buffer)?;
+            let buffer_size = chunk_size - new_chunk_size;
+            let x = r.read(&mut buffer[..buffer_size])?;
 
             if x == 0 { break; }
             for &byte in buffer.iter().take(x) {
@@ -42,9 +43,6 @@ impl Shannon {
             }
 
             new_chunk_size += x;
-            if new_chunk_size > chunk_size {
-                panic!("Noooo!");
-            }
             if new_chunk_size == chunk_size {
                 // Chunk completed, save!
                 new_chunk.calc_entropy();
@@ -213,5 +211,71 @@ mod tests {
         let (a, b) = Shannon::read(&mut r, "-".into()).unwrap().byte_max();
         assert_eq!(a, 7);
         assert_eq!(b, 2);
+    }
+
+    #[test]
+    fn slow_reader_test() {
+        use std::io::Read;
+        use std::io::BufReader;
+
+        struct OneByteAtATime<R>(R);
+
+        impl<R: Read> Read for OneByteAtATime<R> {
+            fn read(&mut self, out: &mut [u8]) -> Result<usize, std::io::Error> {
+                if out.len() < 1 {
+                    Ok(0)
+                } else {
+                    self.0.read(&mut out[..1])
+                }
+            }
+        }
+
+        let values: &[u8] = &[7, 2, 3, 4, 5, 6, 7];
+        let mut r = BufReader::new(OneByteAtATime(values));
+        let (a, b) = Shannon::read(&mut r, "-".into()).unwrap().byte_max();
+        assert_eq!(a, 7);
+        assert_eq!(b, 2);
+    }
+
+    // Simulate reading one 1 on the first call to read, and 16*1024 0s on the second call to read
+    // This used to panic because of a bug in Shannon::read
+    #[test]
+    fn one_1_and_16k_0s() {
+        use std::io::Read;
+        use std::io::BufReader;
+
+        struct One1And16k0s {
+            offset: usize,
+        }
+
+        impl Read for One1And16k0s {
+            fn read(&mut self, out: &mut [u8]) -> Result<usize, std::io::Error> {
+                // chunk_size from Shannon::read
+                let chunk_size = 16 * 1024;
+                if out.len() < 1 {
+                    return Ok(0);
+                }
+                if self.offset == 0 {
+                    out[0] = 1;
+                    self.offset += 1;
+                    Ok(1)
+                } else if self.offset < chunk_size + 1 {
+                    out.fill(0);
+                    let bytes_read = chunk_size + 1 - self.offset;
+                    self.offset += out.len();
+                    if self.offset > chunk_size + 1 {
+                        self.offset = chunk_size + 1;
+                    }
+                    Ok(bytes_read.min(out.len()))
+                } else {
+                    Ok(0)
+                }
+            }
+        }
+
+        let mut r = BufReader::new(One1And16k0s { offset: 0 });
+        let (a, b) = Shannon::read(&mut r, "-".into()).unwrap().byte_max();
+        assert_eq!(a, 0);
+        assert_eq!(b, 16*1024);
     }
 }
