@@ -1,5 +1,5 @@
-use std::fs::File; 
 use std::ffi::OsString;
+use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::path::Path;
 
@@ -36,7 +36,9 @@ impl Shannon {
             let buffer_size = chunk_size - new_chunk_size;
             let x = r.read(&mut buffer[..buffer_size])?;
 
-            if x == 0 { break; }
+            if x == 0 {
+                break;
+            }
             for &byte in buffer.iter().take(x) {
                 freq_table[byte as usize] += 1;
                 new_chunk.count(byte);
@@ -63,7 +65,7 @@ impl Shannon {
 
         let mut entropy: f64 = 0.0;
 
-        for &c in freq_table.iter(){
+        for &c in freq_table.iter() {
             if c != 0 {
                 let temp: f64 = c as f64 / filesize as f64;
                 entropy += -temp * f64::log2(temp);
@@ -72,7 +74,7 @@ impl Shannon {
 
         let chunk_size = chunk_size as u32;
 
-        Ok( Shannon { 
+        Ok(Shannon {
             filename,
             filesize,
             freq_table,
@@ -84,7 +86,7 @@ impl Shannon {
     pub fn open<P: AsRef<Path>>(path: P) -> Result<Shannon, std::io::Error> {
         let file = File::open(&path)?;
         let mut reader = BufReader::new(file);
-        
+
         Self::read(&mut reader, OsString::from(path.as_ref().as_os_str()))
     }
     pub fn from_stdin() -> Result<Shannon, std::io::Error> {
@@ -114,29 +116,41 @@ impl Shannon {
         let mut v: f64 = 0.0;
         for s in self.freq_table.iter() {
             let x = *s as f64 - mean;
-            v += x*x;
+            v += x * x;
         }
         let denom = (256 - 1) as f64;
-        (v/denom).sqrt()
+        (v / denom).sqrt()
     }
     pub fn byte_min(&self) -> (u8, u64) {
-        let (a, b) = self.freq_table.iter().enumerate().map(|(x, y)| (y, x)).min().unwrap();
+        let (a, b) = self
+            .freq_table
+            .iter()
+            .enumerate()
+            .map(|(x, y)| (y, x))
+            .min()
+            .unwrap();
         (b as u8, *a)
     }
     pub fn byte_max(&self) -> (u8, u64) {
-        let (a, b) = self.freq_table.iter().enumerate().map(|(x, y)| (y, x)).max().unwrap();
+        let (a, b) = self
+            .freq_table
+            .iter()
+            .enumerate()
+            .map(|(x, y)| (y, x))
+            .max()
+            .unwrap();
         (b as u8, *a)
     }
     pub fn random_walk(&self) -> f64 {
         // Start at 0. For every bit, go left if 0 and go right if 1
         // In the end, normalize the scale so it's between -1 and +1
 
-        // This array stores the number of ones in a nibble 
-        let one_count = [ 0u8, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4 ];
+        // This array stores the number of ones in a nibble
+        let one_count = [0u8, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4];
         let mut start = 0;
         for (i, &x) in self.freq_table.iter().enumerate() {
             // A byte is two nibbles:
-            let ones = one_count[i&0xf] + one_count[i>>4];
+            let ones = one_count[i & 0xf] + one_count[i >> 4];
             start += (ones as i64 - 4) * 2 * x as i64;
         }
 
@@ -155,7 +169,10 @@ pub struct Chunk {
 
 impl Chunk {
     fn new() -> Self {
-        Self { freq_table: [0; 256], entropy: 0.0 }
+        Self {
+            freq_table: [0; 256],
+            entropy: 0.0,
+        }
     }
     fn count(&mut self, byte: u8) {
         self.freq_table[byte as usize] += 1;
@@ -164,7 +181,7 @@ impl Chunk {
         let mut entropy: f64 = 0.0;
         let filesize: u32 = self.freq_table.iter().sum();
 
-        for &c in self.freq_table.iter(){
+        for &c in self.freq_table.iter() {
             if c != 0 {
                 let temp: f64 = c as f64 / filesize as f64;
                 entropy += -temp * f64::log2(temp);
@@ -183,7 +200,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn it_works(){
+    fn it_works() {
         assert_eq!(Shannon::open("test0").unwrap().entropy(), 0.0);
         assert_eq!(Shannon::open("test1").unwrap().entropy(), 0.0);
         let t2 = Shannon::open("test2").unwrap();
@@ -193,13 +210,13 @@ mod tests {
 
     #[test]
     #[should_panic]
-    fn it_panics(){
+    fn it_panics() {
         let _ent = Shannon::open("").unwrap();
     }
 
     #[test]
     #[should_panic]
-    fn it_panics_also(){
+    fn it_panics_also() {
         let _ent = Shannon::open("filethatdoenstexist").unwrap();
     }
 
@@ -215,8 +232,8 @@ mod tests {
 
     #[test]
     fn slow_reader_test() {
-        use std::io::Read;
         use std::io::BufReader;
+        use std::io::Read;
 
         struct OneByteAtATime<R>(R);
 
@@ -241,8 +258,8 @@ mod tests {
     // This used to panic because of a bug in Shannon::read
     #[test]
     fn one_1_and_16k_0s() {
-        use std::io::Read;
         use std::io::BufReader;
+        use std::io::Read;
 
         struct One1And16k0s {
             offset: usize,
@@ -276,6 +293,6 @@ mod tests {
         let mut r = BufReader::new(One1And16k0s { offset: 0 });
         let (a, b) = Shannon::read(&mut r, "-".into()).unwrap().byte_max();
         assert_eq!(a, 0);
-        assert_eq!(b, 16*1024);
+        assert_eq!(b, 16 * 1024);
     }
 }

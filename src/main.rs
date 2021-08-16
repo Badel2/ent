@@ -14,32 +14,38 @@ fn pretty_size(s: u64) -> String {
         r /= 1000_f64;
         i += 1;
     }
-    
+
     format!("{:>6.1} {} ", r, units[i])
 }
 
-const FREQ_CHAR: [char; 9] = [
-    ' ', '▁', '▂', '▃', '▄', '▅', '▆', '▇', '█',
-];
+const FREQ_CHAR: [char; 9] = [' ', '▁', '▂', '▃', '▄', '▅', '▆', '▇', '█'];
 
 fn pretty_ascii_table(t: &[u64; 256]) -> String {
     // Assuming a 80 width terminal with unicode support
     //let total_freq = t.iter().fold(0, |a, &b| a + b);
-    let max_freq = *t.iter().enumerate().map(|(x, y)| (y, x)).max().unwrap_or((&0u64, 0)).0 as f64;
-    let mut s = String::with_capacity(4*80*3);
+    let max_freq = *t
+        .iter()
+        .enumerate()
+        .map(|(x, y)| (y, x))
+        .max()
+        .unwrap_or((&0u64, 0))
+        .0 as f64;
+    let mut s = String::with_capacity(4 * 80 * 3);
     s.push_str("   00 ");
     for (i, &x) in t.iter().enumerate() {
-        let n = if x == 0 { 0 } else {
+        let n = if x == 0 {
+            0
+        } else {
             let n = x as f64 / max_freq * (FREQ_CHAR.len() - 1) as f64;
             let mut n = n as usize;
             if n >= FREQ_CHAR.len() - 1 {
                 n = FREQ_CHAR.len() - 2;
             }
-            n+1
+            n + 1
         };
         let c = FREQ_CHAR[n as usize];
         s.push(c);
-        match i { 
+        match i {
             0x1F => s.push_str("   20 "),
             0x3F => s.push_str("\n   40 "),
             0x5F => s.push_str("   60 "),
@@ -48,7 +54,7 @@ fn pretty_ascii_table(t: &[u64; 256]) -> String {
             0xBF => s.push_str("\n   C0 "),
             0xDF => s.push_str("   E0 "),
             _ => {}
-        } 
+        }
     }
 
     s
@@ -58,10 +64,12 @@ fn pretty_chunk_bar(ce: &[f64]) -> String {
     // TODO: make this configurable
     let chunk_size = "16KiB";
     let line_size = "16KiB * 64 = 1MiB";
-    
-    let mut s = String::with_capacity(4*80*3);
+
+    let mut s = String::with_capacity(4 * 80 * 3);
     s.push_str(&format!(
-        "  Chunk size: {}    Line size: {}\n   {:04} ", chunk_size, line_size, 0));
+        "  Chunk size: {}    Line size: {}\n   {:04} ",
+        chunk_size, line_size, 0
+    ));
     for (i, &x) in ce.iter().enumerate() {
         // Map entropy from [0.0, 8.0] to [1, 8]
         let mut n = (x + 0.5) as usize + 1;
@@ -97,8 +105,7 @@ impl Default for Options {
 impl Options {
     fn process_file(&self, f: OsString) {
         match Shannon::open(&f) {
-            Err(why) => eprintln!(
-                    "couldn't open {}: {}", f.to_string_lossy(), why.to_string()),
+            Err(why) => eprintln!("couldn't open {}: {}", f.to_string_lossy(), why.to_string()),
             Ok(s) => {
                 self.print_info(&s);
             }
@@ -107,8 +114,7 @@ impl Options {
 
     fn process_stdin(&self) {
         match Shannon::from_stdin() {
-            Err(why) => eprintln!(
-                    "couldn't open stdin: {}", why.to_string()),
+            Err(why) => eprintln!("couldn't open stdin: {}", why.to_string()),
             Ok(s) => {
                 self.print_info(&s);
             }
@@ -117,15 +123,28 @@ impl Options {
 
     fn print_info(&self, s: &Shannon) {
         let filesize = if self.show_free_space {
-            (s.filesize() as f64 * (1_f64 - s.entropy()/8_f64)) as u64
+            (s.filesize() as f64 * (1_f64 - s.entropy() / 8_f64)) as u64
         } else {
             s.filesize()
         };
-        println!("{:.5}  [{}]  {}", s.entropy(), pretty_size(filesize), s.filename());
+        println!(
+            "{:.5}  [{}]  {}",
+            s.entropy(),
+            pretty_size(filesize),
+            s.filename()
+        );
         if self.show_byte_frequency {
-            println!("  mean: {}, std: {:.5}, min: {} (0x{:0X}), max: {} (0x{:0X})", s.mean(), s.std_dev(), s.byte_min().1, s.byte_min().0, s.byte_max().1, s.byte_max().0);
+            println!(
+                "  mean: {}, std: {:.5}, min: {} (0x{:0X}), max: {} (0x{:0X})",
+                s.mean(),
+                s.std_dev(),
+                s.byte_min().1,
+                s.byte_min().0,
+                s.byte_max().1,
+                s.byte_max().0
+            );
             println!("  Random walk ends at: {:+.5}", s.random_walk());
-            println!("{}",pretty_ascii_table(s.freq_table()));
+            println!("{}", pretty_ascii_table(s.freq_table()));
         }
         if self.show_chunks {
             //println!("{:#?}", s.chunk_entropy());
@@ -134,25 +153,33 @@ impl Options {
     }
 }
 
-fn main() { 
+fn main() {
     let matches = App::new("ent")
-        .arg(Arg::with_name("filenames")
-            .help("Input files")
-            .index(1)
-            .multiple(true)
-            .required(true))
-        .arg(Arg::with_name("table")
-            .help("Print ascii table")
-            .short("b")
-            .long("table"))
-        .arg(Arg::with_name("free")
-            .help("Show how many bytes could be freed if the files were compressed")
-            .short("f")
-            .long("free"))
-        .arg(Arg::with_name("chunks")
-            .help("Show details for each chunk")
-            .short("c")
-            .long("chunks"))
+        .arg(
+            Arg::with_name("filenames")
+                .help("Input files")
+                .index(1)
+                .multiple(true)
+                .required(true),
+        )
+        .arg(
+            Arg::with_name("table")
+                .help("Print ascii table")
+                .short("b")
+                .long("table"),
+        )
+        .arg(
+            Arg::with_name("free")
+                .help("Show how many bytes could be freed if the files were compressed")
+                .short("f")
+                .long("free"),
+        )
+        .arg(
+            Arg::with_name("chunks")
+                .help("Show details for each chunk")
+                .short("c")
+                .long("chunks"),
+        )
         .get_matches();
 
     let mut o: Options = Default::default();
