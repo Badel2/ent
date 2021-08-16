@@ -180,33 +180,38 @@ impl Chunk {
     }
 }
 
-#[test]
-fn it_works(){
-    assert_eq!(Shannon::open("test0").unwrap().entropy(), 0.0);
-    assert_eq!(Shannon::open("test1").unwrap().entropy(), 0.0);
-    let t2 = Shannon::open("test2").unwrap();
-    assert_eq!(t2.entropy(), 7.982743005032543);
-    assert_eq!(t2.filesize(), 10240);
-}
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-#[test]
-#[should_panic]
-fn it_panics(){
-    let _ent = Shannon::open("").unwrap();
-}
+    #[test]
+    fn it_works(){
+        assert_eq!(Shannon::open("test0").unwrap().entropy(), 0.0);
+        assert_eq!(Shannon::open("test1").unwrap().entropy(), 0.0);
+        let t2 = Shannon::open("test2").unwrap();
+        assert_eq!(t2.entropy(), 7.982743005032543);
+        assert_eq!(t2.filesize(), 10240);
+    }
 
-#[test]
-#[should_panic]
-fn it_panics_also(){
-    let _ent = Shannon::open("filethatdoenstexist").unwrap();
-}
+    #[test]
+    #[should_panic]
+    fn it_panics(){
+        let _ent = Shannon::open("").unwrap();
+    }
 
-#[test]
-fn slice_test() {
-    use std::io::BufReader;
-    let values: &[u8] = &[7, 2, 3, 4, 5, 6, 7];
-    let mut r = BufReader::new(values);
-    let (a, b) = Shannon::read(&mut r, "-".into()).unwrap().byte_max();
-    assert_eq!(a, 7);
-    assert_eq!(b, 2);
+    #[test]
+    #[should_panic]
+    fn it_panics_also(){
+        let _ent = Shannon::open("filethatdoenstexist").unwrap();
+    }
+
+    #[test]
+    fn slice_test() {
+        use std::io::BufReader;
+        let values: &[u8] = &[7, 2, 3, 4, 5, 6, 7];
+        let mut r = BufReader::new(values);
+        let (a, b) = Shannon::read(&mut r, "-".into()).unwrap().byte_max();
+        assert_eq!(a, 7);
+        assert_eq!(b, 2);
+    }
 }

@@ -178,8 +178,10 @@ fn main() {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-pub mod tests {
     #[test]
     fn constant_len_9() {
         assert!(FREQ_CHAR.len() == 9);
