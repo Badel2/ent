@@ -1,6 +1,5 @@
 extern crate clap;
 use clap::{App, Arg};
-use std::error::Error; 
 use std::ffi::OsString;
 
 mod shannon;
@@ -100,7 +99,7 @@ impl Options {
     fn process_file(&self, f: OsString) {
         match Shannon::open(&f) {
             Err(why) => eprintln!(
-                    "couldn't open {}: {}", f.to_string_lossy(), why.description()),
+                    "couldn't open {}: {}", f.to_string_lossy(), why.to_string()),
             Ok(s) => {
                 self.print_info(&s);
             }
@@ -110,7 +109,7 @@ impl Options {
     fn process_stdin(&self) {
         match Shannon::from_stdin() {
             Err(why) => eprintln!(
-                    "couldn't open stdin: {}", why.description()),
+                    "couldn't open stdin: {}", why.to_string()),
             Ok(s) => {
                 self.print_info(&s);
             }
@@ -182,8 +181,6 @@ fn main() {
 
 
 pub mod tests {
-    use super::*;
-
     #[test]
     fn constant_len_9() {
         assert!(FREQ_CHAR.len() == 9);

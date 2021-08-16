@@ -92,7 +92,7 @@ impl Shannon {
     }
     pub fn from_stdin() -> Result<Shannon, std::io::Error> {
         let stdin = std::io::stdin();
-        let file = &mut stdin.lock() as &mut BufRead;
+        let file = &mut stdin.lock();
         let mut reader = BufReader::new(file);
         Self::read(&mut reader, OsString::from("-"))
     }
