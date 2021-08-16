@@ -70,9 +70,8 @@ fn pretty_chunk_bar(ce: &[f64]) -> String {
         }
         let c = FREQ_CHAR[n as usize];
         s.push(c);
-        match i % 64 { 
-            63 => s.push_str(&format!("\n   {:04} ", 1 + i / 64)),
-            _ => {}
+        if i % 64 == 63 {
+            s.push_str(&format!("\n   {:04} ", 1 + i / 64));
         }
     }
 
