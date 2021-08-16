@@ -2,6 +2,7 @@
 name = "ent"
 version = "0.2.0"
 authors = ["root"]
+edition = "2018"
 
 [dependencies]
 clap = "2"
